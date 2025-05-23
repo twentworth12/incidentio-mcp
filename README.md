@@ -1,21 +1,29 @@
 # incident.io MCP Server
 
-An MCP (Model Context Protocol) server for interacting with the incident.io API. This server provides tools to manage incidents through natural language interactions.
+An MCP (Model Context Protocol) server for interacting with the incident.io API. This server provides tools to manage incidents, assign roles, and add comments through natural language interactions.
 
 ## Features
 
-- List incidents with filtering options
+- List and filter incidents
 - Create new incidents
-- Get incident details
-- Update incident status and properties
+- Update incident details and status
+- Assign users to incident roles (e.g., Incident Lead)
+- Add comments to incident timelines
+- List severities, incident types, roles, and users
 
 ## Installation
 
-1. Clone this repository
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/twentworth12/incidentio-mcp.git
+   cd incidentio-mcp
+   ```
+
 2. Install dependencies:
    ```bash
    npm install
    ```
+
 3. Build the TypeScript code:
    ```bash
    npm run build
@@ -37,7 +45,10 @@ An MCP (Model Context Protocol) server for interacting with the incident.io API.
 
 ## Usage with Claude Desktop
 
-Add this server to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+Add this server to your Claude Desktop configuration:
+
+### macOS
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```json
 {
@@ -53,21 +64,36 @@ Add this server to your Claude Desktop configuration (`~/Library/Application Sup
 }
 ```
 
+### Windows
+Edit `%APPDATA%\Claude\claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "incidentio": {
+      "command": "node",
+      "args": ["C:\\path\\to\\incidentio-mcp\\dist\\index.js"],
+      "env": {
+        "INCIDENTIO_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+Replace `/path/to/incidentio-mcp` with the actual path where you cloned this repository.
+
 ## Available Tools
 
-### list_severities
-List available severity levels in your incident.io organization. Use this to get valid `severity_id` values for creating incidents.
+### Incident Management
 
-### list_incident_types
-List available incident types in your incident.io organization. Use this to get valid `incident_type_id` values for creating incidents.
-
-### list_incidents
+#### list_incidents
 List incidents with optional filters:
 - `page_size`: Number of incidents per page (default: 25)
 - `status`: Array of statuses to filter by (triage, investigating, monitoring, closed, declined)
 - `severity`: Array of severity IDs to filter by
 
-### create_incident
+#### create_incident
 Create a new incident:
 - `name` (required): Name of the incident
 - `severity_id` (required): ID of the severity level (use `list_severities` to see options)
@@ -75,17 +101,57 @@ Create a new incident:
 - `summary`: Incident summary
 - `custom_field_entries`: Array of custom field values
 
-### get_incident
+#### get_incident
 Get details of a specific incident:
 - `incident_id` (required): ID of the incident
 
-### update_incident
+#### update_incident
 Update an existing incident:
 - `incident_id` (required): ID of the incident to update
 - `name`: Updated name
 - `summary`: Updated summary
-- `status`: Updated status
+- `status`: Updated status (triage, investigating, monitoring, closed, declined)
 - `severity_id`: Updated severity ID
+
+### Role Assignment
+
+#### update_incident_role
+Assign or update a role for an incident:
+- `incident_id` (required): ID of the incident
+- `role_id` (required): ID of the role (e.g., for Incident Lead)
+- `user_id` (required): ID of the user to assign
+
+#### list_incident_roles
+List available incident roles in your organization.
+
+### Comments
+
+#### add_comment
+Add a comment or timeline update to an incident:
+- `incident_id` (required): ID of the incident
+- `message` (required): The comment text
+
+### Reference Data
+
+#### list_severities
+List available severity levels in your organization.
+
+#### list_incident_types
+List available incident types in your organization.
+
+#### list_users
+List users in your organization:
+- `page_size`: Number of users per page (default: 25)
+
+## Example Usage
+
+Once configured in Claude Desktop, you can use natural language to interact with incident.io:
+
+- "List all open incidents"
+- "Create a new incident called 'Database connection timeout' with high severity"
+- "Assign John Doe as the incident lead for incident INC-123"
+- "Add a comment to incident INC-123 saying 'Investigating the root cause'"
+- "Update incident INC-123 status to investigating"
 
 ## Development
 
@@ -98,6 +164,22 @@ Build for production:
 ```bash
 npm run build
 ```
+
+Clean build artifacts:
+```bash
+npm run clean
+```
+
+## Troubleshooting
+
+### Rate Limiting
+If you see a 429 error, you've hit the incident.io API rate limit. The server will log rate limit headers to help you understand when you can retry.
+
+### 404 Errors
+If you get 404 errors when using certain tools:
+- Verify the incident ID exists
+- Check that your API key has the necessary permissions
+- Ensure you're using valid IDs for roles, users, and other entities
 
 ## License
 
