@@ -9,6 +9,7 @@ An MCP (Model Context Protocol) server for interacting with the incident.io API.
 - Update incident details and status
 - Assign users to incident roles (e.g., Incident Lead)
 - View incident update history
+- List and view follow-ups
 - List severities, incident types, roles, and users
 
 ## Installation
@@ -131,6 +132,17 @@ List available incident roles in your organization.
 View the update history for an incident:
 - `incident_id` (required): ID of the incident
 - `page_size`: Number of updates to return per page (default: 25)
+
+### Follow-ups
+
+#### list_follow_ups
+List follow-ups across all incidents or for a specific incident:
+- `incident_id`: Filter by incident ID (optional)
+- `page_size`: Number of follow-ups to return per page (default: 25)
+
+#### get_follow_up
+Get details of a specific follow-up:
+- `follow_up_id` (required): ID of the follow-up
 
 ### Reference Data
 

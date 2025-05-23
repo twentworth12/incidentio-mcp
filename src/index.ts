@@ -236,6 +236,38 @@ const TOOLS: Tool[] = [
       required: ['incident_id'],
     },
   },
+  {
+    name: 'list_follow_ups',
+    description: 'List follow-ups, optionally filtered by incident',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        incident_id: {
+          type: 'string',
+          description: 'Filter follow-ups by incident ID',
+        },
+        page_size: {
+          type: 'number',
+          description: 'Number of follow-ups to return per page',
+          default: 25,
+        },
+      },
+    },
+  },
+  {
+    name: 'get_follow_up',
+    description: 'Get details of a specific follow-up',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        follow_up_id: {
+          type: 'string',
+          description: 'ID of the follow-up',
+        },
+      },
+      required: ['follow_up_id'],
+    },
+  },
 ];
 
 // Create MCP server
@@ -459,6 +491,38 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (args?.page_size) params.append('page_size', args.page_size.toString());
 
         const response = await apiClient.get(`/v2/incident_updates?${params.toString()}`);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(response.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'list_follow_ups': {
+        const params = new URLSearchParams();
+        if (args?.incident_id) params.append('incident_id', args.incident_id.toString());
+        if (args?.page_size) params.append('page_size', args.page_size.toString());
+
+        const response = await apiClient.get(`/v2/follow_ups?${params.toString()}`);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(response.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'get_follow_up': {
+        if (!args?.follow_up_id) {
+          throw new Error('follow_up_id is required');
+        }
+
+        const response = await apiClient.get(`/v2/follow_ups/${args.follow_up_id}`);
         return {
           content: [
             {
