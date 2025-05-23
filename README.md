@@ -4,12 +4,20 @@ An MCP (Model Context Protocol) server for interacting with the incident.io API.
 
 ## Features
 
+### Incident Management
 - List and filter incidents
-- Create new incidents
+- Create new incidents  
 - Update incident details and status
 - Assign users to incident roles (e.g., Incident Lead)
 - View incident update history
+
+### Organization Resources
 - List and view follow-ups
+- List workflows
+- List schedules
+- View catalog types and entries
+- List custom fields
+- List incident timestamp types
 - List severities, incident types, roles, and users
 
 ## Installation
@@ -143,6 +151,36 @@ List follow-ups across all incidents or for a specific incident:
 #### get_follow_up
 Get details of a specific follow-up:
 - `follow_up_id` (required): ID of the follow-up
+
+### Workflows
+
+#### list_workflows
+List workflows configured in your organization:
+- `page_size`: Number of workflows to return per page (default: 25)
+
+### Schedules
+
+#### list_schedules
+List on-call schedules in your organization:
+- `page_size`: Number of schedules to return per page (default: 25)
+
+### Catalog
+
+#### list_catalog_types
+List available catalog types in your organization.
+
+#### list_catalog_entries
+List entries for a specific catalog type:
+- `catalog_type_id` (required): ID of the catalog type
+- `page_size`: Number of entries to return per page (default: 25)
+
+### Organization Configuration
+
+#### list_custom_fields
+List custom fields configured in your organization.
+
+#### list_incident_timestamps
+List available incident timestamp types (e.g., started_at, detected_at).
 
 ### Reference Data
 

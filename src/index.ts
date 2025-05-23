@@ -268,6 +268,77 @@ const TOOLS: Tool[] = [
       required: ['follow_up_id'],
     },
   },
+  {
+    name: 'list_workflows',
+    description: 'List workflows in your organization',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        page_size: {
+          type: 'number',
+          description: 'Number of workflows to return per page',
+          default: 25,
+        },
+      },
+    },
+  },
+  {
+    name: 'list_schedules',
+    description: 'List schedules in your organization',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        page_size: {
+          type: 'number',
+          description: 'Number of schedules to return per page',
+          default: 25,
+        },
+      },
+    },
+  },
+  {
+    name: 'list_catalog_types',
+    description: 'List catalog types in your organization',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'list_catalog_entries',
+    description: 'List catalog entries for a specific catalog type',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        catalog_type_id: {
+          type: 'string',
+          description: 'ID of the catalog type (use list_catalog_types to get available types)',
+        },
+        page_size: {
+          type: 'number',
+          description: 'Number of entries to return per page',
+          default: 25,
+        },
+      },
+      required: ['catalog_type_id'],
+    },
+  },
+  {
+    name: 'list_custom_fields',
+    description: 'List custom fields configured in your organization',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'list_incident_timestamps',
+    description: 'List available incident timestamp types',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
 ];
 
 // Create MCP server
@@ -523,6 +594,92 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
 
         const response = await apiClient.get(`/v2/follow_ups/${args.follow_up_id}`);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(response.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'list_workflows': {
+        const params = new URLSearchParams();
+        if (args?.page_size) params.append('page_size', args.page_size.toString());
+
+        const response = await apiClient.get(`/v2/workflows?${params.toString()}`);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(response.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'list_schedules': {
+        const params = new URLSearchParams();
+        if (args?.page_size) params.append('page_size', args.page_size.toString());
+
+        const response = await apiClient.get(`/v2/schedules?${params.toString()}`);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(response.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'list_catalog_types': {
+        const response = await apiClient.get('/v2/catalog_types');
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(response.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'list_catalog_entries': {
+        if (!args?.catalog_type_id) {
+          throw new Error('catalog_type_id is required');
+        }
+
+        const params = new URLSearchParams();
+        params.append('catalog_type_id', args.catalog_type_id.toString());
+        if (args?.page_size) params.append('page_size', args.page_size.toString());
+
+        const response = await apiClient.get(`/v2/catalog_entries?${params.toString()}`);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(response.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'list_custom_fields': {
+        const response = await apiClient.get('/v2/custom_fields');
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(response.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'list_incident_timestamps': {
+        const response = await apiClient.get('/v2/incident_timestamps');
         return {
           content: [
             {
