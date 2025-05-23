@@ -7,6 +7,8 @@ An MCP (Model Context Protocol) server for interacting with the incident.io API.
 - List and filter incidents
 - Create new incidents
 - Update incident details and status
+- Assign users to incident roles (e.g., Incident Lead)
+- View incident update history
 - List severities, incident types, roles, and users
 
 ## Installation
@@ -111,8 +113,24 @@ Update an existing incident:
 - `status`: Updated status (triage, investigating, monitoring, closed, declined)
 - `severity_id`: Updated severity ID
 
+### Role Assignment
+
+#### update_incident_role
+Assign or update a role for an incident:
+- `incident_id` (required): ID of the incident
+- `role_id` (required): ID of the role (e.g., for Incident Lead)
+- `user_id` (required): ID of the user to assign
+- `notify_incident_channel`: Whether to notify the incident Slack channel (default: true)
+
 #### list_incident_roles
 List available incident roles in your organization.
+
+### Incident Updates
+
+#### list_incident_updates
+View the update history for an incident:
+- `incident_id` (required): ID of the incident
+- `page_size`: Number of updates to return per page (default: 25)
 
 ### Reference Data
 
@@ -132,9 +150,9 @@ Once configured in Claude Desktop, you can use natural language to interact with
 
 - "List all open incidents"
 - "Create a new incident called 'Database connection timeout' with high severity"
+- "Assign John Doe as the incident lead for incident INC-123"
+- "Show me the update history for incident INC-123"
 - "Update incident INC-123 status to investigating"
-- "Show me the details of incident INC-123"
-- "List all available severity levels"
 
 ## Development
 

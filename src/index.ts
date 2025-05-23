@@ -169,6 +169,33 @@ const TOOLS: Tool[] = [
     },
   },
   {
+    name: 'update_incident_role',
+    description: 'Assign or update a role (like Incident Lead) for an incident',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        incident_id: {
+          type: 'string',
+          description: 'ID of the incident',
+        },
+        role_id: {
+          type: 'string',
+          description: 'ID of the role (e.g., for Incident Lead)',
+        },
+        user_id: {
+          type: 'string',
+          description: 'ID of the user to assign to the role',
+        },
+        notify_incident_channel: {
+          type: 'boolean',
+          description: 'Whether to notify the incident channel (default: true)',
+          default: true,
+        },
+      },
+      required: ['incident_id', 'role_id', 'user_id'],
+    },
+  },
+  {
     name: 'list_incident_roles',
     description: 'List available incident roles',
     inputSchema: {
@@ -188,6 +215,25 @@ const TOOLS: Tool[] = [
           default: 25,
         },
       },
+    },
+  },
+  {
+    name: 'list_incident_updates',
+    description: 'List updates for an incident',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        incident_id: {
+          type: 'string',
+          description: 'ID of the incident',
+        },
+        page_size: {
+          type: 'number',
+          description: 'Number of updates to return per page',
+          default: 25,
+        },
+      },
+      required: ['incident_id'],
     },
   },
 ];
@@ -347,12 +393,72 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
+      case 'update_incident_role': {
+        if (!args?.incident_id) {
+          throw new Error('incident_id is required');
+        }
+        if (!args?.role_id) {
+          throw new Error('role_id is required');
+        }
+        if (!args?.user_id) {
+          throw new Error('user_id is required');
+        }
+
+        const body = {
+          incident: {
+            incident_role_assignments: [
+              {
+                incident_role_id: args.role_id,
+                assignee: {
+                  id: args.user_id,
+                },
+              }
+            ],
+          },
+          notify_incident_channel: args.notify_incident_channel !== false, // Default to true
+        };
+
+        console.error(`[DEBUG] Updating incident role for incident ${args.incident_id}`);
+        console.error(`[DEBUG] Role ID: ${args.role_id}, User ID: ${args.user_id}`);
+
+        const response = await apiClient.post(`/v2/incidents/${args.incident_id}/actions/edit`, body);
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(response.data, null, 2),
+            },
+          ],
+        };
+      }
+
 
       case 'list_users': {
         const params = new URLSearchParams();
         if (args?.page_size) params.append('page_size', args.page_size.toString());
 
         const response = await apiClient.get(`/v2/users?${params.toString()}`);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(response.data, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'list_incident_updates': {
+        if (!args?.incident_id) {
+          throw new Error('incident_id is required');
+        }
+
+        const params = new URLSearchParams();
+        params.append('incident_id', args.incident_id.toString());
+        if (args?.page_size) params.append('page_size', args.page_size.toString());
+
+        const response = await apiClient.get(`/v2/incident_updates?${params.toString()}`);
         return {
           content: [
             {
