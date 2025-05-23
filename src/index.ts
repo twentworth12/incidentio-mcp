@@ -169,28 +169,6 @@ const TOOLS: Tool[] = [
     },
   },
   {
-    name: 'update_incident_role',
-    description: 'Assign or update a role (like Incident Lead) for an incident',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        incident_id: {
-          type: 'string',
-          description: 'ID of the incident',
-        },
-        role_id: {
-          type: 'string',
-          description: 'ID of the role (e.g., "01JAR1BCBHS1VH61HJAWWDHFCK" for Incident Lead)',
-        },
-        user_id: {
-          type: 'string',
-          description: 'ID of the user to assign to the role',
-        },
-      },
-      required: ['incident_id', 'role_id', 'user_id'],
-    },
-  },
-  {
     name: 'list_incident_roles',
     description: 'List available incident roles',
     inputSchema: {
@@ -210,24 +188,6 @@ const TOOLS: Tool[] = [
           default: 25,
         },
       },
-    },
-  },
-  {
-    name: 'add_comment',
-    description: 'Add a comment or timeline update to an incident',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        incident_id: {
-          type: 'string',
-          description: 'ID of the incident to add comment to',
-        },
-        message: {
-          type: 'string',
-          description: 'The comment or update message',
-        },
-      },
-      required: ['incident_id', 'message'],
     },
   },
 ];
@@ -387,79 +347,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case 'update_incident_role': {
-        if (!args?.incident_id) {
-          throw new Error('incident_id is required');
-        }
-        if (!args?.role_id) {
-          throw new Error('role_id is required');
-        }
-        if (!args?.user_id) {
-          throw new Error('user_id is required');
-        }
-
-        console.error(`[DEBUG] Updating incident role for incident ${args.incident_id}`);
-        console.error(`[DEBUG] Role ID: ${args.role_id}, User ID: ${args.user_id}`);
-
-        // Try multiple approaches for role assignment
-        
-        // Approach 1: Try v1 incident_memberships endpoint
-        try {
-          console.error(`[DEBUG] Trying v1 endpoint: /v1/incident_memberships`);
-          const v1Body = {
-            incident_id: args.incident_id,
-            user_id: args.user_id,
-            incident_role_id: args.role_id,
-          };
-          
-          const response = await apiClient.post('/v1/incident_memberships', v1Body);
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify(response.data, null, 2),
-              },
-            ],
-          };
-        } catch (error) {
-          if (axios.isAxiosError(error)) {
-            console.error(`[DEBUG] v1 failed with status: ${error.response?.status}`);
-            console.error(`[DEBUG] v1 error: ${error.response?.data?.message || error.message}`);
-          }
-          
-          // Approach 2: Try v2 edit endpoint
-          try {
-            console.error(`[DEBUG] Trying v2 endpoint: /v2/incidents/${args.incident_id}/actions/edit`);
-            const v2Body = {
-              incident_role_assignments: [
-                {
-                  assignee: {
-                    id: args.user_id,
-                  },
-                  incident_role_id: args.role_id,
-                }
-              ],
-            };
-
-            const response = await apiClient.post(`/v2/incidents/${args.incident_id}/actions/edit`, v2Body);
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(response.data, null, 2),
-                },
-              ],
-            };
-          } catch (v2Error) {
-            if (axios.isAxiosError(v2Error)) {
-              console.error(`[DEBUG] v2 also failed with status: ${v2Error.response?.status}`);
-              console.error(`[DEBUG] v2 error: ${v2Error.response?.data?.message || v2Error.message}`);
-            }
-            // Re-throw the original error
-            throw error;
-          }
-        }
-      }
 
       case 'list_users': {
         const params = new URLSearchParams();
@@ -476,54 +363,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case 'add_comment': {
-        if (!args?.incident_id) {
-          throw new Error('incident_id is required');
-        }
-        if (!args?.message) {
-          throw new Error('message is required');
-        }
-
-        const body = {
-          message: args.message,
-        };
-
-        console.error(`[DEBUG] Adding comment to incident ${args.incident_id}`);
-        console.error(`[DEBUG] Message: ${args.message}`);
-        
-        // Try v2 endpoint first
-        try {
-          console.error(`[DEBUG] Trying v2 endpoint: /v2/incidents/${args.incident_id}/updates`);
-          const response = await apiClient.post(`/v2/incidents/${args.incident_id}/updates`, body);
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify(response.data, null, 2),
-              },
-            ],
-          };
-        } catch (error) {
-          if (axios.isAxiosError(error) && error.response?.status === 404) {
-            // Try alternative endpoint
-            console.error(`[DEBUG] v2/updates failed, trying v1 timeline_events endpoint`);
-            const v1Body = {
-              event_type: 'manual',
-              message: args.message,
-            };
-            const response = await apiClient.post(`/v1/incidents/${args.incident_id}/timeline_events`, v1Body);
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(response.data, null, 2),
-                },
-              ],
-            };
-          }
-          throw error;
-        }
-      }
 
       default:
         throw new Error(`Unknown tool: ${name}`);
